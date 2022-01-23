@@ -17,7 +17,7 @@ DWORD WINAPI HackThread(HMODULE hModule)
     std::cout << "Og for a fee, stay sippin' fam\n";
      //get module base
 
-    uintptr_t  directionAddr = 0,
+    uintptr_t* directionAddr = 0,
                 localPlayerPtr = 0,
                 healthAddr = 0,
                 speedAddr = 0,
@@ -37,15 +37,15 @@ DWORD WINAPI HackThread(HMODULE hModule)
     bool bHealth = false, bAmmo = false, bRecoil = false;
     uintptr_t* localPlayerPtr = (uintptr_t*)(moduleBase + 0x10f4f4);
     
-    localPlayerPtr = moduleBase + 0x10f4f4;
-    entityPtr = moduleBase + 0x110D90;
-    healthAddr = mem::FindDMAAddy(localPlayerPtr, { 0xf8 });
-    speedAddr = mem::FindDMAAddy(localPlayerPtr, { 0x80 });
-    localPlayerYawAddr = mem::FindDMAAddy(localPlayerPtr, { 0x40 });
-    localPlayerPitchAddr = mem::FindDMAAddy(localPlayerPtr, { 0x44 });
-    localPlayerTeamAddr = mem::FindDMAAddy(localPlayerPtr, { 0x32c });
-    playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
-    directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
+    
+    entityPtr = (uintptr_t*)(moduleBase + 0x110D90);
+    healthAddr = (uintptr_t*)(localPlayerPtr + 0xF8);
+    speedAddr = (uintptr_t*)(localPlayerPtr + 0x80);
+    localPlayerYawAddr = (uintptr_t*)(localPlayerPtr + 0x40);
+    localPlayerPitchAddr = (uintptr_t*)(localPlayerPtr + 0x44);
+    localPlayerTeamAddr = (uintptr_t*)(localPlayerPtr + 0x32C);
+    playersNumAddr = (uintptr_t*)((mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C }));
+    directionAddr = (uintptr_t*)(mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 }));
 
     
     //hack loop
