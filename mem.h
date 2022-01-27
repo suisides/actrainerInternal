@@ -11,9 +11,6 @@ struct vec3
 
 namespace mem
 {
-	void PatchEx(BYTE* dst, BYTE* src, unsigned int size, HANDLE hProcess);
-	void NopEx(BYTE* dst, unsigned int size, HANDLE hProcess);
-	uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t, std::vector<unsigned int> offsets);
 
 	void Patch(BYTE* dst, BYTE* src, unsigned int size);
 	void Nop(BYTE* dst, unsigned int size);
@@ -33,7 +30,7 @@ namespace mem
 	void SetSelfCoords(uintptr_t localPlayerPtr, vec3 coords);
 	vec3 IncrementBy(vec3 coords, float inc, int type);
 
-	void mem::Clear();
-	void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool grenade, bool aimbot, bool flyhack, float speed);
+	void Clear();
+	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump);
 
 }

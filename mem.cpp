@@ -87,9 +87,9 @@ unsigned short mem::GetMovementDirection(uintptr_t directionAddr)
 
 void mem::SetSelfCoords(uintptr_t localPlayerPtr, vec3 coords)
 {	
-	*(float*)(localPlayerPtr + 0x4) = coords.x;
-	*(float*)(localPlayerPtr + 0x8) = coords.y;
-	*(float*)(localPlayerPtr + 0xC) = coords.z;
+	*(float*)(localPlayerPtr + 0x34) = coords.x;
+	*(float*)(localPlayerPtr + 0x38) = coords.y;
+	*(float*)(localPlayerPtr + 0x3C) = coords.z;
 }
 
 vec3 mem::IncrementBy(vec3 coords, float inc, int type)
@@ -146,7 +146,7 @@ void mem::Clear()
 	std::system("cls");
 }
 
-void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool grenade, bool aimbot, bool flyhack, float speed)
+void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	Clear();
@@ -164,7 +164,7 @@ void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool g
 		SetConsoleTextAttribute(hConsole, 15);
 	}
 
-	std::cout << "Numpad 2: Infinite Ammo: ";
+	std::cout << "Numpad 2: Infinite Ammo and Grenades: ";
 	if (ammo)
 	{
 		SetConsoleTextAttribute(hConsole, 10);
@@ -192,61 +192,33 @@ void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool g
 		SetConsoleTextAttribute(hConsole, 15);
 	}
 
-	std::cout << "Numpad 4: Speedhack (ctrl): ";
+	std::cout << "Numpad 4: Speedhack(Ctrl): ";
 	if (speedhack)
 	{
-		SetConsoleTextAttribute(hConsole, 10);
-		std::cout << "Enabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
+					SetConsoleTextAttribute(hConsole, 10);
+					std::cout << "Enabled!\n";
+					SetConsoleTextAttribute(hConsole, 15);
 	}
 	else
 	{
-		SetConsoleTextAttribute(hConsole, 12);
-		std::cout << "Disabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
+					SetConsoleTextAttribute(hConsole, 12);
+					std::cout << "Disabled!\n";
+					SetConsoleTextAttribute(hConsole, 15);
 	}
-
-	std::cout << "Numpad 5: Infinite Grenades: ";
-	if (grenade)
+	
+	std::cout << "Numpad 5: Super Jump: ";
+	if (superjump)
 	{
-		SetConsoleTextAttribute(hConsole, 10);
-		std::cout << "Enabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
+					SetConsoleTextAttribute(hConsole, 10);
+					std::cout << "Enabled!\n";
+					SetConsoleTextAttribute(hConsole, 15);
 	}
 	else
 	{
-		SetConsoleTextAttribute(hConsole, 12);
-		std::cout << "Disabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
+					SetConsoleTextAttribute(hConsole, 12);
+					std::cout << "Disabled!\n";
+					SetConsoleTextAttribute(hConsole, 15);
 	}
-
-	std::cout << "Numpad 6: Aimbot(Caps-Lock): ";
-	if (aimbot)
-	{
-		SetConsoleTextAttribute(hConsole, 10);
-		std::cout << "Enabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
-	}
-	else
-	{
-		SetConsoleTextAttribute(hConsole, 12);
-		std::cout << "Disabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
-	}
-
-	std::cout << "Numpad 8: Flyhack: ";
-	if (flyhack)
-	{
-		SetConsoleTextAttribute(hConsole, 10);
-		std::cout << "Enabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
-	}
-	else
-	{
-		SetConsoleTextAttribute(hConsole, 12);
-		std::cout << "Disabled!\n";
-		SetConsoleTextAttribute(hConsole, 15);
-	}
-	std::cout << "Flyhack Speed: " << speed << std::endl;
+	
 	std::cout << "Insert: Exit\n";
 }

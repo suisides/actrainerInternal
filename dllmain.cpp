@@ -15,102 +15,121 @@ DWORD WINAPI HackThread(HMODULE hModule)
     FILE* f;
     freopen_s(&f, "CONOUT$", "w", stdout);
     std::cout << "Og for a fee, stay sippin' fam\n";
-     //get module base
-
-    uintptr_t* directionAddr = 0,
-                localPlayerPtr = 0,
-                healthAddr = 0,
-                speedAddr = 0,
-                grenadeAddr = 0,
-                entityPtr = 0,
-                localPlayerYawAddr = 0,
-                playersNumAddr = 0,
-                localPlayerPitchAddr = 0,
-                localPlayerXAddr = 0,
-                localPlayerYAddr = 0,
-                localPlayerZAddr = 0,
-                localPlayerTeamAddr = 0;
-
-
-   
+    
+    
+    //get module base
     uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"ac_client.exe");
-    bool bHealth = false, bAmmo = false, bRecoil = false;
-    uintptr_t* localPlayerPtr = (uintptr_t*)(moduleBase + 0x10f4f4);
+   
+    uintptr_t localPlayerPtr = *(uintptr_t*)(moduleBase + 0x10f4f4);
+    uintptr_t entityPtr = *(uintptr_t*)(moduleBase + 0x110D90);
+    uintptr_t superJumpAddr = localPlayerPtr + 0x18;
+    uintptr_t healthAddr = localPlayerPtr + 0xF8;
+    uintptr_t speedAddr = localPlayerPtr + 0x80;
+    uintptr_t localPlayerYawAddr = localPlayerPtr + 0x40;
+    uintptr_t localPlayerPitchAddr = localPlayerPtr + 0x44;
+    uintptr_t localPlayerTeamAddr = localPlayerPtr + 0x32c;
+    uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
+    uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
+    uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B4, { 0x158 });
+    uintptr_t currentAmmoPtr = mem::FindDMAAddy(localPlayerPtr, { 0x374, 0x14});
     
-    
-    entityPtr = (uintptr_t*)(moduleBase + 0x110D90);
-    healthAddr = (uintptr_t*)(localPlayerPtr + 0xF8);
-    speedAddr = (uintptr_t*)(localPlayerPtr + 0x80);
-    localPlayerYawAddr = (uintptr_t*)(localPlayerPtr + 0x40);
-    localPlayerPitchAddr = (uintptr_t*)(localPlayerPtr + 0x44);
-    localPlayerTeamAddr = (uintptr_t*)(localPlayerPtr + 0x32C);
-    playersNumAddr = (uintptr_t*)((mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C }));
-    directionAddr = (uintptr_t*)(mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 }));
+    bool bHealth = false, 
+         bAmmo = false, 
+         bRecoil = false, 
+         bSpeedhack = false,
+         bSuperJump = false;
 
-    
+    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+
     //hack loop
     while(true)
     {
         //key input
-        if (GetAsyncKeyState(VK_END) & 1)
+        if (GetAsyncKeyState(VK_INSERT) & 1)
         {
             break;
         }
-        //godmode
-        if (GetAsyncKeyState(VK_NUMPAD1) & 1)
+
+        if (bAmmo)
         {
-            bHealth = !bHealth;
+            mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
+            mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x06", 2);
+            if (*(int*)(currentAmmoPtr) == 0)
+                *(int*)(currentAmmoPtr) = 1;
+
+            if (*(int*)(grenadeAmmoAddr) == 0)
+                *(int*)(grenadeAmmoAddr) = 1;
         }
-
-        if (GetAsyncKeyState(VK_NUMPAD2) & 1)
+        else
         {
-            bAmmo = !bAmmo;
-        }
-
-        if (GetAsyncKeyState(VK_NUMPAD3) & 1)
-        {
-            bRecoil = !bRecoil;
-
-            if(bRecoil)
-            {
-                mem::Nop((BYTE*)(moduleBase + 0x63786), 10);
-            }
-            else
-            {
-                //write back original instructions
-                mem::Patch((BYTE*)(moduleBase + 0x63786), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10);
-            }
+            mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x0E", 2);
+            mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x0E", 2);
         }
         
-        
-        if(GetAsyncKeyState(VK_NUMPAD7) & 1)
-            {
-                vec3 self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
-                std::cout << "x = " << self.x << "\ny = " << self.y << "\nz = " << self.z << std::endl;
-            }
+        if (bRecoil)
+            mem::Nop((BYTE*)(moduleBase + 0x63786), 10);
+        else
+            //write back original instructions
+            mem::Patch((BYTE*)(moduleBase + 0x63786), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10);
 
         //continuous write/freeze
-       
-
         if (localPlayerPtr)
-        {
-            if (bHealth)
+        {   
+            //godmode
+            if (GetAsyncKeyState(VK_NUMPAD1) & 1)
             {
-                *(int*)(*localPlayerPtr + 0xf8) = 1337;
+                bHealth = !bHealth;
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+            }
+        
+            //inc ammo and grenades
+            if (GetAsyncKeyState(VK_NUMPAD2) & 1)
+            {
+                bAmmo = !bAmmo;
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+            }
+        
+            //remove recoil
+            if (GetAsyncKeyState(VK_NUMPAD3) & 1)
+            {
+                bRecoil = !bRecoil;
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+                
+            }
+            //enable speedhack
+            if (GetAsyncKeyState(VK_NUMPAD4) & 1)
+            {
+                bSpeedhack = !bSpeedhack;
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
             }
             
-            if (bAmmo)
+            if (GetAsyncKeyState(VK_NUMPAD5) & 1)
             {
-                //uintptr_t ammoAddr = mem::FindDMAAddy(moduleBase + 0x10f4f4, { 0x374, 0x14, 0x0 });
-                //int* ammo = (int*)ammoAddr;
-                //*ammo = 1337;
-                
-                //or just 
-                
-                *(int*)mem::FindDMAAddy(moduleBase + 0x10f4f4, { 0x374, 0x14, 0x0 }) = 1337;
+                bSuperJump = !bSuperJump;
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+
+            }
+            
+            if(GetAsyncKeyState(VK_NUMPAD7) & 1)
+            {
+                vec3 self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
+                std::cout << "\nlocal coords: " << self.x << " " << self.y << " " << self.z << std::endl;   
             }
 
-            
+            if (bHealth)
+                *(int*)healthAddr = 1337;
+
+            if(bSpeedhack)
+            {
+                if(GetAsyncKeyState(VK_CONTROL))
+                    *(int*)speedAddr = 3;
+            }
+
+            if (bSuperJump)
+            {
+                if (GetAsyncKeyState(VK_SPACE) & 1)
+                    *(float*)superJumpAddr = 4.f;
+            }
         }
         Sleep(5);
     }
