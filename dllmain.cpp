@@ -31,16 +31,20 @@ DWORD WINAPI HackThread(HMODULE hModule)
     uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
     uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
     uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
-    uintptr_t currentAmmoPtr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
+    uintptr_t currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
 
     
     bool bHealth = false, 
          bAmmo = false, 
          bRecoil = false, 
          bSpeedhack = false,
-         bSuperJump = false;
+         bSuperJump = false,
+         bAimbot = false;
 
-    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+
+    vec3 self, currEnemy;
+
 
     //hack loop
     while(true)
@@ -53,8 +57,8 @@ DWORD WINAPI HackThread(HMODULE hModule)
 
         if (bAmmo)
         {
-            if (*(int*)(currentAmmoPtr) == 0)
-                *(int*)(currentAmmoPtr) += 1;
+            if (*(int*)(currentAmmoAddr) == 0)
+                *(int*)(currentAmmoAddr) += 1;
 
             if (*(int*)(grenadeAmmoAddr) == 0)
                 *(int*)(grenadeAmmoAddr) += 1;
@@ -73,14 +77,14 @@ DWORD WINAPI HackThread(HMODULE hModule)
             if (GetAsyncKeyState(VK_NUMPAD1) & 1)
             {
                 bHealth = !bHealth;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
             }
         
             //inc ammo and grenades
             if (GetAsyncKeyState(VK_NUMPAD2) & 1)
             {
                 bAmmo = !bAmmo;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
                 if(bAmmo)
                 {
                 mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
@@ -92,28 +96,33 @@ DWORD WINAPI HackThread(HMODULE hModule)
                 mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x08", 2);
                 }
             }
-        
             //remove recoil
             if (GetAsyncKeyState(VK_NUMPAD3) & 1)
             {
                 bRecoil = !bRecoil;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
                 
             }
             //enable speedhack
             if (GetAsyncKeyState(VK_NUMPAD4) & 1)
             {
                 bSpeedhack = !bSpeedhack;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
             }
-            
+            //super jump
             if (GetAsyncKeyState(VK_NUMPAD5) & 1)
             {
                 bSuperJump = !bSuperJump;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump);
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
 
             }
             
+            if (GetAsyncKeyState(VK_NUMPAD6) & 1) 
+            {
+                bAimbot = !bAimbot;
+                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+            }
+
             if(GetAsyncKeyState(VK_NUMPAD7) & 1)
             {
                 //vec3 self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
@@ -122,6 +131,7 @@ DWORD WINAPI HackThread(HMODULE hModule)
                 std::cout << "ammo: " << *(int*)(currentAmmoPtr) << std::endl;
                 std::cout << "grenade: " << *(int*)(grenadeAmmoAddr) << std::endl;
             }
+
 
             if (bHealth)
                 *(int*)healthAddr = 1337;
@@ -137,7 +147,58 @@ DWORD WINAPI HackThread(HMODULE hModule)
                 if (GetAsyncKeyState(VK_SPACE) & 1)
                     *(float*)(superJumpAddr) = 4.f;
             }
+
+            if (bAimbot)
+            {
+                if(GetAsyncKeyState(VK_XBUTTON1))
+                {
+                    //skip if dead
+                    if (*(int*)healthAddr < 1)
+                        continue;
+                    
+                    int localTeam = *(int*)localPlayerTeamAddr;
+                    int playersNum = *(int*)playersNumAddr;
+                    //get local position
+                    self = mem::GetSelfCoords(localPlayerPtr);
+
+                    //get closest enemy
+                    float distance = 99999999;
+                    unsigned int enemyIndex = 0;
+
+                    for(unsigned int i = 0; i < playersNum; i++)
+                    {
+                        uintptr_t currEnemyAddr = mem::FindDMAAddy(entityPtr, { i * 4 });
+                        uintptr_t currEnemyTeamAddr = mem::FindDMAAddy(entityPtr, { i * 4, 0x32C });
+
+                        int currPlayerTeam = *(int*)currEnemyAddr;
+                        //skip if teammate
+                        if (currPlayerTeam == localTeam)
+                            continue;
+
+                        
+                        uintptr_t enemyHPAddr = mem::FindDMAAddy(entityPtr, { i * 4, 0xF8 });
+                        int hp = *(int*)enemyHPAddr;
+                        if (hp < 1)
+                            continue;
+
+                        //get enemy coords
+                        currEnemy = mem::GetEntCoords(entityPtr, i);
+                        float currDist = mem::GetDistance(self, currEnemy);
+                        if (currDist < distance)
+                        {
+                            distance = currDist;
+                            enemyIndex = i;
+
+                        }
+                    }
+                    vec3 angles;
+                    //set angles
+                    angles = mem::GetAngle(self, currEnemy);
+
+                }
+            }
         }
+        
         Sleep(5);
     }
 

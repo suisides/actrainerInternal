@@ -79,6 +79,16 @@ vec3 mem::GetAngle(vec3 src, vec3 dst)
 	return angle;
 }
 
+vec3 mem::SetAngle(uintptr_t localPlayerPtr, vec3 angles)
+{
+				uintptr_t localPlayerAddr = mem::FindDMAAddy(localPlayerPtr, { 0x40 });
+				*(float*)(localPlayerAddr) = angles.x;
+				*(float*)(localPlayerAddr + 0x4) = angles.y;
+				*(float*)(localPlayerAddr + 0x8) = angles.z;
+
+
+}
+
 unsigned short mem::GetMovementDirection(uintptr_t directionAddr)
 {
 	unsigned short directionVal = *(unsigned short*)directionAddr;
@@ -146,7 +156,7 @@ void mem::Clear()
 	std::system("cls");
 }
 
-void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump)
+void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	Clear();
@@ -220,5 +230,20 @@ void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool s
 					SetConsoleTextAttribute(hConsole, 15);
 	}
 	
+	std::cout << "Numpad 6: Aimbot: ";
+	if (aimbot)
+	{
+					SetConsoleTextAttribute(hConsole, 10);
+					std::cout << "Enabled!\n";
+					SetConsoleTextAttribute(hConsole, 15);
+	}
+	else
+	{
+					SetConsoleTextAttribute(hConsole, 12);
+					std::cout << "Disabled!\n";
+					SetConsoleTextAttribute(hConsole, 15);
+	}
+
+
 	std::cout << "Insert: Exit\n";
 }

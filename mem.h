@@ -25,12 +25,13 @@ namespace mem
 	float GetDistance(vec3 src, vec3 dst);
 
 	vec3 GetAngle(vec3 enemyCoord, vec3 selfCoord);
+	vec3 SetAngle(uintptr_t localPlayerPtr, vec3 angles);
 
 	unsigned short GetMovementDirection(uintptr_t directionAddr);
 	void SetSelfCoords(uintptr_t localPlayerPtr, vec3 coords);
 	vec3 IncrementBy(vec3 coords, float inc, int type);
 
 	void Clear();
-	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump);
+	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot);
 
 }
