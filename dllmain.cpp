@@ -20,18 +20,18 @@ DWORD WINAPI HackThread(HMODULE hModule)
     //get module base
     uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"ac_client.exe");
    
-    uintptr_t localPlayerPtr = moduleBase + 0x10f4f4;
+    uintptr_t localPlayerPtr = moduleBase + 0x10F4F4;
     uintptr_t entityPtr = moduleBase + 0x110D90;
-    uintptr_t superJumpAddr = localPlayerPtr + 0x18;
-    uintptr_t healthAddr = localPlayerPtr + 0xF8;
-    uintptr_t speedAddr = localPlayerPtr + 0x80;
-    uintptr_t localPlayerYawAddr = localPlayerPtr + 0x40;
-    uintptr_t localPlayerPitchAddr = localPlayerPtr + 0x44;
-    uintptr_t localPlayerTeamAddr = localPlayerPtr + 0x32c;
+    uintptr_t superJumpAddr = mem::FindDMAAddy(localPlayerPtr, { 0x18 });
+    uintptr_t healthAddr = mem::FindDMAAddy(localPlayerPtr, { 0xF8 });
+    uintptr_t speedAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x80 });
+    uintptr_t localPlayerYawAddr = mem::FindDMAAddy(localPlayerPtr, { 0x40 });
+    uintptr_t localPlayerPitchAddr = mem::FindDMAAddy(localPlayerPtr, { 0x44 });
+    uintptr_t localPlayerTeamAddr = mem::FindDMAAddy(localPlayerPtr, { 0x32C });
     uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
     uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
     uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
-    uintptr_t currentAmmoPtr = mem::FindDMAAddy(localPlayerPtr, { 0x374, 0x14 , 0x0 });
+    uintptr_t currentAmmoPtr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
 
     
     bool bHealth = false, 
@@ -54,10 +54,10 @@ DWORD WINAPI HackThread(HMODULE hModule)
         if (bAmmo)
         {
             if (*(int*)(currentAmmoPtr) == 0)
-                *(int*)(currentAmmoPtr) = 1;
+                *(int*)(currentAmmoPtr) += 1;
 
-            /*if (*(int*)(grenadeAmmoAddr) == 0)
-                *(int*)(grenadeAmmoAddr) += 1;*/
+            if (*(int*)(grenadeAmmoAddr) == 0)
+                *(int*)(grenadeAmmoAddr) += 1;
         }
         
         if (bRecoil)
@@ -84,12 +84,12 @@ DWORD WINAPI HackThread(HMODULE hModule)
                 if(bAmmo)
                 {
                 mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
-                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x08", 2);
+                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x00", 2);
                 }
                 else
                 {
                 mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x0E", 2);
-                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x00", 2);
+                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x08", 2);
                 }
             }
         
@@ -118,6 +118,7 @@ DWORD WINAPI HackThread(HMODULE hModule)
             {
                 //vec3 self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
                 //std::cout << "\nlocal coords: " << self.x << " " << self.y << " " << self.z << std::endl;  
+                uintptr_t currentAmmoPtr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
                 std::cout << "ammo: " << *(int*)(currentAmmoPtr) << std::endl;
                 std::cout << "grenade: " << *(int*)(grenadeAmmoAddr) << std::endl;
             }
@@ -128,13 +129,13 @@ DWORD WINAPI HackThread(HMODULE hModule)
             if(bSpeedhack)
             {
                 if(GetAsyncKeyState(VK_CONTROL))
-                    *(int*)speedAddr = 3;
+                    *(int*)(speedAddr) = 3;
             }
 
             if (bSuperJump)
             {
                 if (GetAsyncKeyState(VK_SPACE) & 1)
-                    *(float*)superJumpAddr = 4.f;
+                    *(float*)(superJumpAddr) = 4.f;
             }
         }
         Sleep(5);
