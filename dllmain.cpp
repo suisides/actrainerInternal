@@ -20,14 +20,14 @@ DWORD WINAPI HackThread(HMODULE hModule)
     //get module base
     uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"ac_client.exe");
    
-    uintptr_t localPlayerPtr = moduleBase + 0x10F4F4;
-    uintptr_t entityPtr = moduleBase + 0x110D90;
-    uintptr_t superJumpAddr = mem::FindDMAAddy(localPlayerPtr, { 0x18 });
-    uintptr_t healthAddr = mem::FindDMAAddy(localPlayerPtr, { 0xF8 });
+    uintptr_t* localPlayerPtr = (uintptr_t*)(moduleBase + 0x10F4F4); //address of localPlayerPtr
+    uintptr_t* entityPtr = (uintptr_t*)(moduleBase + 0x110D90); //address of entityPtr
+    uintptr_t superJumpAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x18 });
+    uintptr_t healthAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0xF8 });
     uintptr_t speedAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x80 });
-    uintptr_t localPlayerYawAddr = mem::FindDMAAddy(localPlayerPtr, { 0x40 });
-    uintptr_t localPlayerPitchAddr = mem::FindDMAAddy(localPlayerPtr, { 0x44 });
-    uintptr_t localPlayerTeamAddr = mem::FindDMAAddy(localPlayerPtr, { 0x32C });
+    uintptr_t localPlayerYawAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x40 });
+    uintptr_t localPlayerPitchAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x44 });
+    uintptr_t localPlayerTeamAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x32C });
     uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
     uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
     uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
@@ -50,104 +50,120 @@ DWORD WINAPI HackThread(HMODULE hModule)
     while(true)
     {
         //key input
+        
+        //exit
         if (GetAsyncKeyState(VK_INSERT) & 1)
         {
             break;
         }
-
-        if (bAmmo)
+        //godmode
+        if (GetAsyncKeyState(VK_NUMPAD1) & 1)
         {
-            if (*(int*)(currentAmmoAddr) == 0)
-                *(int*)(currentAmmoAddr) += 1;
-
-            if (*(int*)(grenadeAmmoAddr) == 0)
-                *(int*)(grenadeAmmoAddr) += 1;
+            bHealth = !bHealth;
+            mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
         }
-        
-        if (bRecoil)
-            mem::Nop((BYTE*)(moduleBase + 0x63786), 10);
-        else
-            //write back original instructions
-            mem::Patch((BYTE*)(moduleBase + 0x63786), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10);
+        //inc ammo and grenades
+        if (GetAsyncKeyState(VK_NUMPAD2) & 1)
+        {
+            bAmmo = !bAmmo;
+            mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+            if (bAmmo)
+            {
+                mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
+                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x00", 2);
+            }
+            else
+            {
+                mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x0E", 2);
+                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x08", 2);
+            }
+        }
+        //remove recoil
+        if (GetAsyncKeyState(VK_NUMPAD3) & 1)
+        {
+            bRecoil = !bRecoil;
+            mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
 
+        }
+        //enable speedhack
+        if (GetAsyncKeyState(VK_NUMPAD4) & 1)
+        {
+            bSpeedhack = !bSpeedhack;
+            mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        }
+        //super jump
+        if (GetAsyncKeyState(VK_NUMPAD5) & 1)
+        {
+            bSuperJump = !bSuperJump;
+            mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        }
+        //aimbot 
+        if (GetAsyncKeyState(VK_NUMPAD6) & 1)
+        {
+            bAimbot = !bAimbot;
+            mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        }
+        //debug
+        if (GetAsyncKeyState(VK_NUMPAD7) & 1)
+        {
+            self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
+            int localTeam = *(int*)localPlayerTeamAddr;
+            //std::cout << "|| localPlayerPtr = moduleBase + 0x10F4F4 ||" << std::endl;
+            //std::cout << "localPlayerPtr: " << std::hex << localPlayerPtr << std::endl;
+            //std::cout << "*localPlayerPtr: " << *localPlayerPtr << std::endl;
+            //std::cout << "&localPlayerPtr: " << &localPlayerPtr << std::endl;
+            //std::cout << "(uintptr_t)localPlayerPtr: "<<(uintptr_t)localPlayerPtr;
+            //std::cout << "\nlocal coords: " << std::dec << self.x << " " << self.y << " " << self.z << std::endl;
+            std::cout << self.x << " , " << self.y << " , " << self.z << std::endl;
+            std::cout << "local hp: " << *(int*)healthAddr << std::endl;
+            std::cout << "local team: " << *(int*)localPlayerTeamAddr << std::endl;
+            std::cout << "number of players: " << *(int*)playersNumAddr << std::endl;
+            vec3 enemy = mem::GetEntCoords((uintptr_t)entityPtr, 2);
+            std::cout << "enemy 2: "<<enemy.x << " , " << enemy.y << " , " << enemy.z << std::endl;
+            for (unsigned int i = 0; i < *(int*)playersNumAddr; i++) 
+            {
+                uintptr_t currenemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });
+                uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
+                if (*(int*)currEnemyTeamAddr == *(int*)localPlayerTeamAddr)
+                    continue;
+                std::cout << "enemy [" << i << "] hp: " << *(int*)currenemyHPAddr << std::endl;
+                std::cout << "enemy [" << i << "] team: " << *(int*)currEnemyTeamAddr << std::endl << std::endl;
+            }
+        } 
+        
         //continuous write/freeze
         if (localPlayerPtr)
         {   
-            //godmode
-            if (GetAsyncKeyState(VK_NUMPAD1) & 1)
-            {
-                bHealth = !bHealth;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
-            }
-        
-            //inc ammo and grenades
-            if (GetAsyncKeyState(VK_NUMPAD2) & 1)
-            {
-                bAmmo = !bAmmo;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
-                if(bAmmo)
-                {
-                mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
-                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x00", 2);
-                }
-                else
-                {
-                mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x0E", 2);
-                mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x08", 2);
-                }
-            }
-            //remove recoil
-            if (GetAsyncKeyState(VK_NUMPAD3) & 1)
-            {
-                bRecoil = !bRecoil;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
-                
-            }
-            //enable speedhack
-            if (GetAsyncKeyState(VK_NUMPAD4) & 1)
-            {
-                bSpeedhack = !bSpeedhack;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
-            }
-            //super jump
-            if (GetAsyncKeyState(VK_NUMPAD5) & 1)
-            {
-                bSuperJump = !bSuperJump;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
-
-            }
-            
-            if (GetAsyncKeyState(VK_NUMPAD6) & 1) 
-            {
-                bAimbot = !bAimbot;
-                mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
-            }
-
-            if(GetAsyncKeyState(VK_NUMPAD7) & 1)
-            {
-                //vec3 self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
-                //std::cout << "\nlocal coords: " << self.x << " " << self.y << " " << self.z << std::endl;  
-                uintptr_t currentAmmoPtr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
-                std::cout << "ammo: " << *(int*)(currentAmmoPtr) << std::endl;
-                std::cout << "grenade: " << *(int*)(grenadeAmmoAddr) << std::endl;
-            }
-
-
             if (bHealth)
                 *(int*)healthAddr = 1337;
+            
+            if (bAmmo)
+            {
+                currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
+                if (*(int*)(currentAmmoAddr) == 0)
+                    *(int*)(currentAmmoAddr) += 1;
+
+                if (*(int*)(grenadeAmmoAddr) == 0)
+                    *(int*)(grenadeAmmoAddr) += 1;
+            }
+
+            if (bRecoil)
+                mem::Nop((BYTE*)(moduleBase + 0x63786), 10);
+            else
+                mem::Patch((BYTE*)(moduleBase + 0x63786), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10); //write back original instructions
+
 
             if(bSpeedhack)
             {
                 if(GetAsyncKeyState(VK_CONTROL))
-                    *(int*)(speedAddr) = 3;
+                    *(int*)speedAddr = 3;
             }
 
             if (bSuperJump)
             {
                 if (GetAsyncKeyState(VK_SPACE) & 1)
-                    *(float*)(superJumpAddr) = 4.f;
+                    *(float*)superJumpAddr = 4.f;
             }
-
             if (bAimbot)
             {
                 if(GetAsyncKeyState(VK_XBUTTON1))
@@ -156,45 +172,38 @@ DWORD WINAPI HackThread(HMODULE hModule)
                     if (*(int*)healthAddr < 1)
                         continue;
                     
-                    int localTeam = *(int*)localPlayerTeamAddr;
-                    int playersNum = *(int*)playersNumAddr;
                     //get local position
-                    self = mem::GetSelfCoords(localPlayerPtr);
-
+                    self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
+                    
                     //get closest enemy
                     float distance = 99999999;
                     unsigned int enemyIndex = 0;
 
-                    for(unsigned int i = 0; i < playersNum; i++)
+                    for(unsigned int i = 0; i < *(int*)playersNumAddr; i++)
                     {
-                        uintptr_t currEnemyAddr = mem::FindDMAAddy(entityPtr, { i * 4 });
-                        uintptr_t currEnemyTeamAddr = mem::FindDMAAddy(entityPtr, { i * 4, 0x32C });
-
-                        int currPlayerTeam = *(int*)currEnemyAddr;
+                        uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
+                        uintptr_t currenemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });
                         //skip if teammate
-                        if (currPlayerTeam == localTeam)
+                        if (*(int*)currEnemyTeamAddr == *(int*)localPlayerTeamAddr)
                             continue;
-
-                        
-                        uintptr_t enemyHPAddr = mem::FindDMAAddy(entityPtr, { i * 4, 0xF8 });
-                        int hp = *(int*)enemyHPAddr;
-                        if (hp < 1)
+                        //skip if dead
+                        if (*(int*)currenemyHPAddr < 1)
                             continue;
 
                         //get enemy coords
-                        currEnemy = mem::GetEntCoords(entityPtr, i);
+                        currEnemy = mem::GetEntCoords((uintptr_t)entityPtr, i);
                         float currDist = mem::GetDistance(self, currEnemy);
                         if (currDist < distance)
                         {
                             distance = currDist;
                             enemyIndex = i;
-
                         }
                     }
-                    vec3 angles;
+                    vec3 angles = mem::GetAngle(self, mem::GetEntCoords((uintptr_t)entityPtr, enemyIndex));
                     //set angles
-                    angles = mem::GetAngle(self, currEnemy);
-
+                    
+                    *(float*)localPlayerYawAddr = angles.x;
+                    *(float*)localPlayerPitchAddr = angles.y;
                 }
             }
         }

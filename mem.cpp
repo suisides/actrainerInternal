@@ -33,6 +33,7 @@ uintptr_t mem::FindDMAAddy(uintptr_t ptr, std::vector<unsigned int> offsets)
 vec3 mem::GetSelfCoords(uintptr_t localPlayerPtr)
 {
 	vec3 coords;
+	localPlayerPtr = mem::FindDMAAddy(localPlayerPtr, {0x0});
 	coords.x = *(float*)(localPlayerPtr + 0x4);
 	coords.y = *(float*)(localPlayerPtr + 0x8);
 	coords.z = *(float*)(localPlayerPtr + 0xC);
@@ -41,11 +42,11 @@ vec3 mem::GetSelfCoords(uintptr_t localPlayerPtr)
 
 vec3 mem::GetEntCoords(uintptr_t entityPtr, unsigned int index)
 {
+	entityPtr = FindDMAAddy(entityPtr, { index * 4 , 0x0 });
 	vec3 coords;
-	uintptr_t enemyBase = FindDMAAddy(entityPtr, { index * 4 });
-	coords.x = *(float*)(enemyBase + 0x4);
-	coords.y = *(float*)(enemyBase + 0x8);
-	coords.z = *(float*)(enemyBase + 0xC);
+	coords.x = *(float*)(entityPtr + 0x4);
+	coords.y = *(float*)(entityPtr + 0x8);
+	coords.z = *(float*)(entityPtr + 0xC);
 	return coords;
 }
 
@@ -75,18 +76,14 @@ vec3 mem::GetAngle(vec3 src, vec3 dst)
 	angle.x = -atan2f(dst.x - src.x, dst.y - src.y) / PI * 180.0f + 180.0f;
 	angle.y = asinf((dst.z - src.z) / GetDistance(src, dst)) * 180.0f / PI;
 	angle.z = 0.0f;
-
 	return angle;
 }
 
 vec3 mem::SetAngle(uintptr_t localPlayerPtr, vec3 angles)
 {
-				uintptr_t localPlayerAddr = mem::FindDMAAddy(localPlayerPtr, { 0x40 });
-				*(float*)(localPlayerAddr) = angles.x;
-				*(float*)(localPlayerAddr + 0x4) = angles.y;
-				*(float*)(localPlayerAddr + 0x8) = angles.z;
-
-
+	*(float*)(localPlayerPtr + 0x40) = angles.x;
+	*(float*)(localPlayerPtr + 0x44) = angles.y;
+	*(float*)(localPlayerPtr + 0x48) = angles.z;
 }
 
 unsigned short mem::GetMovementDirection(uintptr_t directionAddr)
