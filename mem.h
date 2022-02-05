@@ -4,6 +4,8 @@
 #include <vector>
 
 
+
+
 struct vec3
 {
 	float x, y, z;
@@ -19,6 +21,7 @@ namespace mem
 	
 	vec3 GetSelfCoords(uintptr_t localPlayerPtr);
 	vec3 GetEntCoords(uintptr_t entityPtr, unsigned int index);
+	vec3 GetSelfViewAngles(uintptr_t localPlayerPtr);
 
 	vec3 Subtract(vec3 src, vec3 dst);
 	float Magnitude(vec3 vec);
@@ -34,4 +37,7 @@ namespace mem
 	void Clear();
 	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot);
 
+
+	bool Detour32(BYTE* src, BYTE* dst, const uintptr_t len);
+	BYTE* TrampHook32(BYTE* src, BYTE* dst, const uintptr_t len);
 }

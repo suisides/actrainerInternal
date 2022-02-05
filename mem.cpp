@@ -42,11 +42,21 @@ vec3 mem::GetSelfCoords(uintptr_t localPlayerPtr)
 
 vec3 mem::GetEntCoords(uintptr_t entityPtr, unsigned int index)
 {
-	entityPtr = FindDMAAddy(entityPtr, { index * 4 , 0x0 });
+	entityPtr = FindDMAAddy(entityPtr, { index * 4 });
 	vec3 coords;
 	coords.x = *(float*)(entityPtr + 0x4);
 	coords.y = *(float*)(entityPtr + 0x8);
 	coords.z = *(float*)(entityPtr + 0xC);
+	return coords;
+}
+
+vec3 mem::GetSelfViewAngles(uintptr_t localPlayerPtr)
+{
+	vec3 coords;
+	localPlayerPtr = mem::FindDMAAddy(localPlayerPtr, { 0x0 });
+	coords.x = *(float*)(localPlayerPtr + 0x40);
+	coords.y = *(float*)(localPlayerPtr + 0x44);
+	coords.z = *(float*)(localPlayerPtr + 0x4C);
 	return coords;
 }
 
@@ -243,4 +253,46 @@ void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool s
 
 
 	std::cout << "Insert: Exit\n";
+}
+
+bool mem::Detour32(BYTE* src, BYTE* dst, const uintptr_t len)
+{
+	if (len < 5) return false;
+
+	DWORD curProtection;
+	VirtualProtect(src, len, PAGE_EXECUTE_READWRITE, &curProtection);
+
+	uintptr_t relativeAddress = dst - src - 5;
+
+	*src = 0xE9;
+
+	*(uintptr_t*)(src + 1) = relativeAddress;
+
+	VirtualProtect(src, len, curProtection, &curProtection);
+	return true;
+}
+
+BYTE* mem::TrampHook32(BYTE* src, BYTE* dst, const uintptr_t len)
+{
+	if (len < 5) return 0;
+
+	//Create Gateway
+	BYTE* gateway = (BYTE*)VirtualAlloc(0, len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+
+	//write the stolen bytes to the gateway
+	memcpy_s(gateway, len, src, len);
+
+	//Get the gateway to destination address
+	uintptr_t gatewayRelativeAddr = src - gateway - 5;
+
+	// add the jmp opcode to the end of the gateway
+	*(gateway + len) = 0xE9;
+
+	//Write the address of the gateway to the jmp
+	*(uintptr_t*)((uintptr_t)gateway + len + 1) = gatewayRelativeAddr;
+
+	//Perform the detour
+	Detour32(src, dst, len);
+
+	return gateway;
 }
