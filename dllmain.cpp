@@ -16,7 +16,7 @@ uintptr_t localPlayerTeamAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x
 uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
 uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
 uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
-uintptr_t currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14});
+uintptr_t currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14, 0x0});
 
 //toggles
 bool    bHealth = false,
@@ -33,7 +33,8 @@ twglSwapBuffers owglSwapBuffers;
 vec3 self, currEnemy;
 
 BOOL __stdcall hkwglSwapBuffers(HDC hDc)
-{ 
+{
+    
     //key input
 
     //exit | unhook function ...
@@ -46,13 +47,13 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD1) & 1)
     {
         bHealth = !bHealth;
-        //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
     }
     //inc ammo and grenades
     if (GetAsyncKeyState(VK_NUMPAD2) & 1)
     {
         bAmmo = !bAmmo;
-        //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
         if (bAmmo)
         {
             mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
@@ -69,26 +70,26 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD3) & 1)
     {
         bRecoil = !bRecoil;
-        //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
 
     }
     //enable speedhack
     if (GetAsyncKeyState(VK_NUMPAD4) & 1)
     {
         bSpeedhack = !bSpeedhack;
-        //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
     }
     //super jump
     if (GetAsyncKeyState(VK_NUMPAD5) & 1)
     {
         bSuperJump = !bSuperJump;
-        //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
     }
     //aimbot 
     if (GetAsyncKeyState(VK_NUMPAD6) & 1)
     {
         bAimbot = !bAimbot;
-        //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
     }
     //debug
     if (GetAsyncKeyState(VK_NUMPAD7) & 1)
@@ -162,37 +163,43 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
                 //skip if dead
                 if (*(int*)healthAddr > 1)
                 {
-
                     //get local position
                     self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
-
-                    //get closest enemy
-                    float distance = 99999999;
+                    
                     unsigned int enemyIndex = 0;
-
-                    for (unsigned int i = 0; i < *(int*)playersNumAddr; i++)
+                    if (*(int*)playersNumAddr > 0) 
                     {
-                        uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
-                        uintptr_t currEnemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });
-                        //skip if teammate
-                        if (*(int*)currEnemyTeamAddr == *(int*)localPlayerTeamAddr)
-                            continue;
-                        //skip if dead
-                        if (*(int*)currEnemyHPAddr < 1)
-                            continue;
-
-                        //get enemy coords
-                        currEnemy = mem::GetEntCoords((uintptr_t)entityPtr, i);
-                        float currDist = mem::GetDistance(self, currEnemy);
-                        if (currDist < distance)
+                        
+                        //get closest enemy
+                        float distance = 99999999;
+                        
+                        
+                        for (unsigned int i = 0; i < *(int*)playersNumAddr; i++)
                         {
-                            distance = currDist;
-                            enemyIndex = i;
+                            uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
+                            uintptr_t currEnemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });
+                            //skip if teammate
+                            if (*(int*)currEnemyTeamAddr == *(int*)localPlayerTeamAddr)
+                                continue;
+                            //skip if dead
+                            if (*(int*)currEnemyHPAddr < 1)
+                                continue;
+
+                            //get enemy coords
+                            currEnemy = mem::GetEntCoords((uintptr_t)entityPtr, i);
+                            float currDist = mem::GetDistance(self, currEnemy);
+                            if (currDist < distance)
+                            {
+                                distance = currDist;
+                                enemyIndex = i;
+                            }
                         }
                     }
+                    
                     vec3 angles = mem::GetAngle(self, mem::GetEntCoords((uintptr_t)entityPtr, enemyIndex));
+                    
                     //set angles
-
+                    
                     *(float*)localPlayerYawAddr = angles.x;
                     *(float*)localPlayerPitchAddr = angles.y;
                 }
@@ -200,9 +207,8 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
         }
     }
     
-    return owglSwapBuffers(hDc);
+    return owglSwapBuffers(hDc);//pointer to original function
 }
-
 
 DWORD WINAPI HackThread(HMODULE hModule)
 {
@@ -211,8 +217,9 @@ DWORD WINAPI HackThread(HMODULE hModule)
     FILE* f;
     freopen_s(&f, "CONOUT$", "w", stdout);
     
-    //std::cout << "Og for a fee, stay sippin' fam\n";
-    //mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+    std::cout << "Og for a fee, stay sippin' fam\n";
+    Sleep(500);
+    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
 
     // Hook
     owglSwapBuffers = (twglSwapBuffers)GetProcAddress(GetModuleHandle(L"opengl32.dll"), "wglSwapBuffers");
@@ -221,8 +228,18 @@ DWORD WINAPI HackThread(HMODULE hModule)
     
 
     //cleanup & eject
-    fclose(f);
-    FreeConsole();
+    
+    //keep console open
+    while(true)
+    {
+        if (GetAsyncKeyState(VK_INSERT) & 1) 
+        {
+            fclose(f);
+            FreeConsole();
+            break;
+        }
+        Sleep(5);
+    }  
     return 0;
 }
 

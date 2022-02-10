@@ -277,7 +277,7 @@ BYTE* mem::TrampHook32(BYTE* src, BYTE* dst, const uintptr_t len)
 	if (len < 5) return 0;
 
 	//Create Gateway
-	BYTE* gateway = (BYTE*)VirtualAlloc(0, len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	BYTE* gateway = (BYTE*)VirtualAlloc(0, len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);//gateway is used to store stolen bytes
 
 	//write the stolen bytes to the gateway
 	memcpy_s(gateway, len, src, len);
