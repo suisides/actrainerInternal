@@ -95,28 +95,21 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD7) & 1)
     {
         self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
-        int localTeam = *(int*)localPlayerTeamAddr;
-        //std::cout << "|| localPlayerPtr = moduleBase + 0x10F4F4 ||" << std::endl;
-        //std::cout << "localPlayerPtr: " << std::hex << localPlayerPtr << std::endl;
-        //std::cout << "*localPlayerPtr: " << *localPlayerPtr << std::endl;
-        //std::cout << "&localPlayerPtr: " << &localPlayerPtr << std::endl;
-        //std::cout << "(uintptr_t)localPlayerPtr: "<<(uintptr_t)localPlayerPtr;
-        //std::cout << "\nlocal coords: " << std::dec << self.x << " " << self.y << " " << self.z << std::endl;
+        vec3 ent1coords = mem::GetEntCoords((uintptr_t)entityPtr, 0x0);
         std::cout << self.x << " , " << self.y << " , " << self.z << std::endl;
-        std::cout << "local hp: " << *(int*)healthAddr << std::endl;
+        std::cout << "local hp: " << std::dec <<*(int*)healthAddr << std::endl;
         std::cout << "local team: " << *(int*)localPlayerTeamAddr << std::endl;
         std::cout << "number of players: " << *(int*)playersNumAddr << std::endl;
-        vec3 enemy = mem::GetEntCoords((uintptr_t)entityPtr, 2);
-        std::cout << "enemy 2: " << enemy.x << " , " << enemy.y << " , " << enemy.z << std::endl;
-        for (unsigned int i = 0; i < *(int*)playersNumAddr; i++)
+        std::cout << "address of entity 0: " << std::hex << mem::FindDMAAddy((uintptr_t)entityPtr, { 0x0 }) << std::endl;
+        std::cout << "coords of entity 0: " << std::dec << ent1coords.x << " , " << ent1coords.y << " , " << ent1coords.z << std::endl;
+        std::cout << "address of entity 2: " << std::hex << mem::FindDMAAddy((uintptr_t)entityPtr, { 0x8 }) << std::endl;
+
+       /* for (unsigned int i = 0; i < *(int*)playersNumAddr; i++)
         {
-            uintptr_t currenemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });
-            uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
-            if (*(int*)currEnemyTeamAddr == *(int*)localPlayerTeamAddr)
-                continue;
-            std::cout << "enemy [" << i << "] hp: " << *(int*)currenemyHPAddr << std::endl;
-            std::cout << "enemy [" << i << "] team: " << *(int*)currEnemyTeamAddr << std::endl << std::endl;
-        }
+            uintptr_t entityPtr = mem::FindDMAAddy(entityPtr, { i * 4 });
+            std::cout << "entity address:" << std::hex << entityPtr << std::endl;
+            Sleep(100);
+        }*/
     }
 
 
@@ -174,7 +167,7 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
                         float distance = 99999999;
                         
                         
-                        for (unsigned int i = 0; i < *(int*)playersNumAddr; i++)
+                        for (unsigned int i = 0; i < *(int*)playersNumAddr - 1; i++)
                         {
                             uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
                             uintptr_t currEnemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });

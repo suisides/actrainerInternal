@@ -42,8 +42,8 @@ vec3 mem::GetSelfCoords(uintptr_t localPlayerPtr)
 
 vec3 mem::GetEntCoords(uintptr_t entityPtr, unsigned int index)
 {
-	entityPtr = FindDMAAddy(entityPtr, { index * 4 });
 	vec3 coords;
+	entityPtr = mem::FindDMAAddy(entityPtr, { index * 4 , 0x0});
 	coords.x = *(float*)(entityPtr + 0x4);
 	coords.y = *(float*)(entityPtr + 0x8);
 	coords.z = *(float*)(entityPtr + 0xC);
