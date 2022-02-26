@@ -22,6 +22,21 @@
     <Filter Include="pch">
       <UniqueIdentifier>{9fa80d0a-a1ae-4cb5-86d4-2c2465346019}</UniqueIdentifier>
     </Filter>
+    <Filter Include="hook">
+      <UniqueIdentifier>{d25f1b09-b817-4757-b718-2f9cf18b6d67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL Text">
+      <UniqueIdentifier>{81c8c90d-c892-4360-8301-f794b13dba03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL Draw">
+      <UniqueIdentifier>{03a1aee2-dd2b-4a93-99fc-6fa8f0f817a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="geom">
+      <UniqueIdentifier>{4ffb97bf-3c7a-4a20-a17e-8ed44a41bff2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ESP">
+      <UniqueIdentifier>{3edb5a76-7695-438b-b527-0d9d5a1db2de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -42,12 +57,27 @@
     <ClInclude Include="targetver.h">
       <Filter>pch</Filter>
     </ClInclude>
+    <ClInclude Include="hook.h">
+      <Filter>hook</Filter>
+    </ClInclude>
+    <ClInclude Include="glDraw.h">
+      <Filter>OpenGL Draw</Filter>
+    </ClInclude>
+    <ClInclude Include="glText.h">
+      <Filter>OpenGL Text</Filter>
+    </ClInclude>
+    <ClInclude Include="assaultcube.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ESP.h">
+      <Filter>ESP</Filter>
+    </ClInclude>
+    <ClInclude Include="geom.h">
+      <Filter>geom</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mem.cpp">
@@ -55,6 +85,21 @@
     </ClCompile>
     <ClCompile Include="proc.cpp">
       <Filter>proc</Filter>
+    </ClCompile>
+    <ClCompile Include="hook.cpp">
+      <Filter>hook</Filter>
+    </ClCompile>
+    <ClCompile Include="glDraw.cpp">
+      <Filter>OpenGL Draw</Filter>
+    </ClCompile>
+    <ClCompile Include="glText.cpp">
+      <Filter>OpenGL Text</Filter>
+    </ClCompile>
+    <ClCompile Include="ESP.cpp">
+      <Filter>ESP</Filter>
+    </ClCompile>
+    <ClCompile Include="geom.cpp">
+      <Filter>geom</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

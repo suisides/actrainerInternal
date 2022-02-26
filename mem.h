@@ -2,14 +2,8 @@
 #include "stdafx.h"
 #include <windows.h>
 #include <vector>
+#include "geom.h"
 
-
-
-
-struct vec3
-{
-	float x, y, z;
-};
 
 namespace mem
 {
@@ -36,8 +30,4 @@ namespace mem
 
 	void Clear();
 	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot);
-
-
-	bool Detour32(BYTE* src, BYTE* dst, const uintptr_t len);
-	BYTE* TrampHook32(BYTE* src, BYTE* dst, const uintptr_t len);
 }

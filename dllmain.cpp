@@ -3,6 +3,12 @@
 #include "pch.h"
 #include <iostream>
 #include "mem.h"
+#include "hook.h"
+#include "glText.h"
+#include "glDraw.h"
+#include "ESP.h"
+
+
 
 uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"ac_client.exe");
 uintptr_t* localPlayerPtr = (uintptr_t*)(moduleBase + 0x10F4F4);
@@ -18,6 +24,9 @@ uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
 uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
 uintptr_t currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14, 0x0});
 
+float drawX = 300, drawY = 300, drawLX = 0, drawLY = 0;
+bool returnLoop = false;
+
 //toggles
 bool    bHealth = false,
         bAmmo = false,
@@ -29,14 +38,40 @@ bool    bHealth = false,
 typedef BOOL(__stdcall* twglSwapBuffers) (HDC hDc);
 
 twglSwapBuffers owglSwapBuffers;
+twglSwapBuffers wglSwapBuffersGateway;
+
+GL::Font glFont;
+const int FONT_HEIGHT = 15;
+const int FONT_WIDTH = 9;
+
+const char* example = "ESP Box";
+const char* example2 = "i'm inside fam";
+
+ESP esp;
+
+void Draw()
+{
+    HDC currentHDC = wglGetCurrentDC();
+
+    if(!glFont.bBuilt || currentHDC != glFont.hdc)
+    {
+        glFont.Build(FONT_HEIGHT);
+    }
+
+    GL::SetupOrtho();//DRAW HERE
+    
+    esp.Draw(glFont);
+
+    GL::RestoreGL();
+}
+
+
 
 vec3 self, currEnemy;
 
 BOOL __stdcall hkwglSwapBuffers(HDC hDc)
 {
     
-    //key input
-
     //exit | unhook function ...
     /*if (GetAsyncKeyState(VK_INSERT) & 1)
     {
@@ -200,7 +235,12 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
         }
     }
     
-    return owglSwapBuffers(hDc);//pointer to original function
+   
+
+
+    Draw();
+
+    return wglSwapBuffersGateway(hDc);//pointer to original function
 }
 
 DWORD WINAPI HackThread(HMODULE hModule)
@@ -214,13 +254,9 @@ DWORD WINAPI HackThread(HMODULE hModule)
     Sleep(500);
     mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
 
-    // Hook
-    owglSwapBuffers = (twglSwapBuffers)GetProcAddress(GetModuleHandle(L"opengl32.dll"), "wglSwapBuffers");
-    owglSwapBuffers = (twglSwapBuffers)mem::TrampHook32((BYTE*)owglSwapBuffers, (BYTE*)hkwglSwapBuffers, 5); //address returned by TrampHook32(...)
-    //
-    
+    Hook SwapBuffersHook("wglSwapBuffers", "opengl32.dll", (BYTE*)hkwglSwapBuffers, (BYTE*)&wglSwapBuffersGateway, 5);
+    SwapBuffersHook.Enable();
 
-    //cleanup & eject
     
     //keep console open
     while(true)
@@ -229,10 +265,12 @@ DWORD WINAPI HackThread(HMODULE hModule)
         {
             fclose(f);
             FreeConsole();
+            
             break;
         }
         Sleep(5);
-    }  
+    }
+    SwapBuffersHook.Disable();
     return 0;
 }
 
