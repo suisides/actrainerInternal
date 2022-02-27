@@ -33,6 +33,7 @@ public:
 	bool IsTeamGame();
 	bool IsEnemy(ent* e);
 	bool IsValidEnt(ent* ent);
+	bool IsAlive(ent* ent);
 
 	void DrawESPBox(ent* e, vec3, GL::Font& font);
 	void Draw(GL::Font& font);

@@ -7,9 +7,13 @@
 #include "glText.h"
 #include "glDraw.h"
 #include "ESP.h"
+#include "assaultcube.h"
+#include "geom.h"
 
 
-
+ent* localPlayer = *(ent**)0x50F4F4;
+int* numOfPlayers = (int*)(0x50f500);
+entList* entlist = *(entList**)0x50F4F8;
 uintptr_t moduleBase = (uintptr_t)GetModuleHandle(L"ac_client.exe");
 uintptr_t* localPlayerPtr = (uintptr_t*)(moduleBase + 0x10F4F4);
 uintptr_t* entityPtr = (uintptr_t*)(moduleBase + 0x110D90);
@@ -43,9 +47,6 @@ twglSwapBuffers wglSwapBuffersGateway;
 GL::Font glFont;
 const int FONT_HEIGHT = 15;
 const int FONT_WIDTH = 9;
-
-const char* example = "ESP Box";
-const char* example2 = "i'm inside fam";
 
 ESP esp;
 
@@ -108,7 +109,7 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
 
     }
-    //enable speedhack
+    //speedhack
     if (GetAsyncKeyState(VK_NUMPAD4) & 1)
     {
         bSpeedhack = !bSpeedhack;
@@ -153,16 +154,10 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (localPlayerPtr)
     {
         if (bHealth)
-            *(int*)healthAddr = 1337;
-
-
+            localPlayer->health = 1337;
 
         if (bAmmo)
         {
-            currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14 , 0x0 });
-            if (*(int*)(currentAmmoAddr) == 0)
-                *(int*)(currentAmmoAddr) += 1;
-
             if (*(int*)(grenadeAmmoAddr) == 0)
                 *(int*)(grenadeAmmoAddr) += 1;
         }
@@ -176,46 +171,47 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
         if (bSpeedhack)
         {
             if (GetAsyncKeyState(VK_CONTROL))
-                *(int*)speedAddr = 3;
+                localPlayer->N00000041 = 3;
         }
 
         if (bSuperJump)
         {
             if (GetAsyncKeyState(VK_SPACE) & 1)
-                *(float*)superJumpAddr = 4.f;
+                *(float*)superJumpAddr = 4.0f;
         }
         if (bAimbot)
         {
             if (GetAsyncKeyState(VK_XBUTTON1))
             {
                 //skip if dead
-                if (*(int*)healthAddr > 1)
+                if (localPlayer->health > 1)
                 {
-                    //get local position
-                    self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
-                    
+                    //local position
+
+
                     unsigned int enemyIndex = 0;
-                    if (*(int*)playersNumAddr > 0) 
+                    if (*numOfPlayers > 0)
                     {
                         
                         //get closest enemy
                         float distance = 99999999;
                         
-                        
-                        for (unsigned int i = 0; i < *(int*)playersNumAddr - 1; i++)
+                        self = localPlayer->head;
+
+                        for (unsigned int i = 0; i < *numOfPlayers - 1; i++)
                         {
-                            uintptr_t currEnemyTeamAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0x32C });
-                            uintptr_t currEnemyHPAddr = mem::FindDMAAddy((uintptr_t)entityPtr, { i * 4, 0xF8 });
                             //skip if teammate
-                            if (*(int*)currEnemyTeamAddr == *(int*)localPlayerTeamAddr)
+                            if (entlist->ents[i]->team == localPlayer->team)
                                 continue;
                             //skip if dead
-                            if (*(int*)currEnemyHPAddr < 1)
+                            if (entlist->ents[i]->health < 1)
                                 continue;
 
                             //get enemy coords
-                            currEnemy = mem::GetEntCoords((uintptr_t)entityPtr, i);
-                            float currDist = mem::GetDistance(self, currEnemy);
+                            currEnemy = entlist->ents[i]->head;
+                            float currDist = self.Distance(entlist->ents[enemyIndex]->head);
+
+                            float currDist = mem::GetDistance(localPlayer->head, currEnemy);
                             if (currDist < distance)
                             {
                                 distance = currDist;
@@ -224,20 +220,17 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
                         }
                     }
                     
-                    vec3 angles = mem::GetAngle(self, mem::GetEntCoords((uintptr_t)entityPtr, enemyIndex));
+                    vec3 angles = mem::GetAngle(localPlayer->head, entlist->ents[enemyIndex]->head);
                     
                     //set angles
                     
-                    *(float*)localPlayerYawAddr = angles.x;
-                    *(float*)localPlayerPitchAddr = angles.y;
+                    localPlayer->vViewAngle.x = angles.x;
+                    localPlayer->vViewAngle.y = angles.y;
                 }
             }
         }
     }
     
-   
-
-
     Draw();
 
     return wglSwapBuffersGateway(hDc);//pointer to original function
@@ -265,7 +258,6 @@ DWORD WINAPI HackThread(HMODULE hModule)
         {
             fclose(f);
             FreeConsole();
-            
             break;
         }
         Sleep(5);

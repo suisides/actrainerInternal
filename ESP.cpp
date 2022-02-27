@@ -27,6 +27,20 @@ bool ESP::IsValidEnt(ent* ent)
 		return false;
 	}
 }
+
+bool ESP::IsAlive(ent* ent)
+{
+	if(ent)
+	{
+		if (ent->health > 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
+}
+
 void ESP::DrawESPBox(ent* e, vec3 screen, GL::Font& font)
 {
 	const GLubyte* color = nullptr;
@@ -60,7 +74,7 @@ void ESP::Draw(GL::Font& font)
 
 	for(int i = 0; i < *numOfPlayers; i++)
 	{
-		if (IsValidEnt(entlist->ents[i]))
+		if (IsValidEnt(entlist->ents[i]) && IsAlive(entlist->ents[i]))
 		{
 			ent* e = entlist->ents[i];
 			vec3 center = e->head;
