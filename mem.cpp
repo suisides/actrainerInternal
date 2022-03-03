@@ -163,7 +163,7 @@ void mem::Clear()
 	std::system("cls");
 }
 
-void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot)
+void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot, bool rapidfire)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	Clear();
@@ -250,7 +250,19 @@ void mem::updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool s
 					std::cout << "Disabled!\n";
 					SetConsoleTextAttribute(hConsole, 15);
 	}
-
+	std::cout << "Numpad 7: Rapid Fire: ";
+	if (rapidfire)
+	{
+		SetConsoleTextAttribute(hConsole, 10);
+		std::cout << "Enabled!\n";
+		SetConsoleTextAttribute(hConsole, 15);
+	}
+	else
+	{
+		SetConsoleTextAttribute(hConsole, 12);
+		std::cout << "Disabled!\n";
+		SetConsoleTextAttribute(hConsole, 15);
+	}
 
 	std::cout << "Insert: Exit\n";
 }

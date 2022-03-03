@@ -29,5 +29,5 @@ namespace mem
 	vec3 IncrementBy(vec3 coords, float inc, int type);
 
 	void Clear();
-	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot);
+	void updateKeys(bool health, bool ammo, bool recoil, bool speedhack, bool superjump, bool aimbot, bool rapidfire);
 }

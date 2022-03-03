@@ -75,8 +75,9 @@ public:
 	class weapon* currentWeapon; //0x0374
 };
 
-struct entList
+class entList
 {
+public:
 	ent* ents[31];
 };
 

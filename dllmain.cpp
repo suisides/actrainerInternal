@@ -26,8 +26,6 @@ uintptr_t localPlayerTeamAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x
 uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
 uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
 uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
-uintptr_t currentAmmoAddr = mem::FindDMAAddy(moduleBase + 0x10F4F4, { 0x374, 0x14, 0x0});
-
 float drawX = 300, drawY = 300, drawLX = 0, drawLY = 0;
 bool returnLoop = false;
 
@@ -37,7 +35,8 @@ bool    bHealth = false,
         bRecoil = false,
         bSpeedhack = false,
         bSuperJump = false,
-        bAimbot = false;
+        bAimbot = false,
+        bRapidFire = false;
 
 typedef BOOL(__stdcall* twglSwapBuffers) (HDC hDc);
 
@@ -49,6 +48,7 @@ const int FONT_HEIGHT = 15;
 const int FONT_WIDTH = 9;
 
 ESP esp;
+vec3 self, currEnemy;
 
 void Draw()
 {
@@ -68,7 +68,7 @@ void Draw()
 
 
 
-vec3 self, currEnemy;
+
 
 BOOL __stdcall hkwglSwapBuffers(HDC hDc)
 {
@@ -83,13 +83,13 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD1) & 1)
     {
         bHealth = !bHealth;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
     }
     //inc ammo and grenades
     if (GetAsyncKeyState(VK_NUMPAD2) & 1)
     {
         bAmmo = !bAmmo;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
         if (bAmmo)
         {
             mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
@@ -106,46 +106,32 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD3) & 1)
     {
         bRecoil = !bRecoil;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
 
     }
     //speedhack
     if (GetAsyncKeyState(VK_NUMPAD4) & 1)
     {
         bSpeedhack = !bSpeedhack;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
     }
     //super jump
     if (GetAsyncKeyState(VK_NUMPAD5) & 1)
     {
         bSuperJump = !bSuperJump;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
     }
     //aimbot 
     if (GetAsyncKeyState(VK_NUMPAD6) & 1)
     {
         bAimbot = !bAimbot;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
     }
-    //debug
+    //rapid fire
     if (GetAsyncKeyState(VK_NUMPAD7) & 1)
     {
-        self = mem::GetSelfCoords((uintptr_t)localPlayerPtr);
-        vec3 ent1coords = mem::GetEntCoords((uintptr_t)entityPtr, 0x0);
-        std::cout << self.x << " , " << self.y << " , " << self.z << std::endl;
-        std::cout << "local hp: " << std::dec <<*(int*)healthAddr << std::endl;
-        std::cout << "local team: " << *(int*)localPlayerTeamAddr << std::endl;
-        std::cout << "number of players: " << *(int*)playersNumAddr << std::endl;
-        std::cout << "address of entity 0: " << std::hex << mem::FindDMAAddy((uintptr_t)entityPtr, { 0x0 }) << std::endl;
-        std::cout << "coords of entity 0: " << std::dec << ent1coords.x << " , " << ent1coords.y << " , " << ent1coords.z << std::endl;
-        std::cout << "address of entity 2: " << std::hex << mem::FindDMAAddy((uintptr_t)entityPtr, { 0x8 }) << std::endl;
-
-       /* for (unsigned int i = 0; i < *(int*)playersNumAddr; i++)
-        {
-            uintptr_t entityPtr = mem::FindDMAAddy(entityPtr, { i * 4 });
-            std::cout << "entity address:" << std::hex << entityPtr << std::endl;
-            Sleep(100);
-        }*/
+        bRapidFire = !bRapidFire;
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
     }
 
 
@@ -160,6 +146,8 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
         {
             if (*(int*)(grenadeAmmoAddr) == 0)
                 *(int*)(grenadeAmmoAddr) += 1;
+            if (localPlayer->currentWeapon->magAmmo->ammo == 0)
+                localPlayer->currentWeapon->magAmmo->ammo++;
         }
 
         if (bRecoil)
@@ -183,35 +171,32 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
         {
             if (GetAsyncKeyState(VK_XBUTTON1))
             {
+                //bool bAnglesSettable = true;      //one day...
+                
                 //skip if dead
                 if (localPlayer->health > 1)
                 {
-                    //local position
-
-
-                    unsigned int enemyIndex = 0;
+                    unsigned int enemyIndex = 1;
                     if (*numOfPlayers > 0)
                     {
-                        
                         //get closest enemy
                         float distance = 99999999;
-                        
-                        self = localPlayer->head;
 
-                        for (unsigned int i = 0; i < *numOfPlayers - 1; i++)
+                        for (unsigned int i = 1; i < *numOfPlayers; i++)
                         {
+                            if (!entlist)
+                                continue;
+                            if (!esp.IsValidEnt(entlist->ents[i]))
+                                continue;
                             //skip if teammate
                             if (entlist->ents[i]->team == localPlayer->team)
                                 continue;
                             //skip if dead
-                            if (entlist->ents[i]->health < 1)
+                            if (!esp.IsAlive(entlist->ents[i]))
                                 continue;
-
                             //get enemy coords
                             currEnemy = entlist->ents[i]->head;
-                            float currDist = self.Distance(entlist->ents[enemyIndex]->head);
-
-                            float currDist = mem::GetDistance(localPlayer->head, currEnemy);
+                            float currDist = localPlayer->head.Distance(entlist->ents[i]->head);
                             if (currDist < distance)
                             {
                                 distance = currDist;
@@ -221,17 +206,20 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
                     }
                     
                     vec3 angles = mem::GetAngle(localPlayer->head, entlist->ents[enemyIndex]->head);
-                    
                     //set angles
-                    
                     localPlayer->vViewAngle.x = angles.x;
                     localPlayer->vViewAngle.y = angles.y;
                 }
             }
         }
+        if (bRapidFire)
+        {
+            if (localPlayer->currentWeapon->gunwait->N000002D6 != 0)
+                localPlayer->currentWeapon->gunwait->N000002D6 = 0;
+        }
     }
     
-    Draw();
+    //Draw();
 
     return wglSwapBuffersGateway(hDc);//pointer to original function
 }
@@ -245,7 +233,7 @@ DWORD WINAPI HackThread(HMODULE hModule)
     
     std::cout << "Og for a fee, stay sippin' fam\n";
     Sleep(500);
-    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot);
+    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
 
     Hook SwapBuffersHook("wglSwapBuffers", "opengl32.dll", (BYTE*)hkwglSwapBuffers, (BYTE*)&wglSwapBuffersGateway, 5);
     SwapBuffersHook.Enable();
