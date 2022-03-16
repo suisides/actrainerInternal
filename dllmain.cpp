@@ -9,6 +9,7 @@
 #include "ESP.h"
 #include "assaultcube.h"
 #include "geom.h"
+#include "GUI.h"
 
 
 ent* localPlayer = *(ent**)0x50F4F4;
@@ -27,13 +28,14 @@ uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
 uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
 uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
 float drawX = 300, drawY = 300, drawLX = 0, drawLY = 0;
-bool returnLoop = false;
+bool bShowGUI = false;
+
 
 //toggles
 bool    bHealth = false,
         bAmmo = false,
         bRecoil = false,
-        bSpeedhack = false,
+        bSpeedHack = false,
         bSuperJump = false,
         bAimbot = false,
         bRapidFire = false;
@@ -48,6 +50,7 @@ const int FONT_HEIGHT = 15;
 const int FONT_WIDTH = 9;
 
 ESP esp;
+GUI gui;
 vec3 self, currEnemy;
 
 void Draw()
@@ -62,6 +65,8 @@ void Draw()
     GL::SetupOrtho();//DRAW HERE
     
     esp.Draw(glFont);
+    if(bShowGUI)
+    gui.DrawGUI(glFont);
 
     GL::RestoreGL();
 }
@@ -70,26 +75,25 @@ void Draw()
 
 
 
+
 BOOL __stdcall hkwglSwapBuffers(HDC hDc)
 {
-    
-    //exit | unhook function ...
-    /*if (GetAsyncKeyState(VK_INSERT) & 1)
+    //toggle GUI
+    if(GetAsyncKeyState(VK_DELETE) & 1)
     {
-        break;
-    }*/
-
+        bShowGUI = !bShowGUI;
+    }
     //godmode
     if (GetAsyncKeyState(VK_NUMPAD1) & 1)
     {
         bHealth = !bHealth;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //inc ammo and grenades
     if (GetAsyncKeyState(VK_NUMPAD2) & 1)
     {
         bAmmo = !bAmmo;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
         if (bAmmo)
         {
             mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
@@ -106,32 +110,32 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD3) & 1)
     {
         bRecoil = !bRecoil;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
 
     }
     //speedhack
     if (GetAsyncKeyState(VK_NUMPAD4) & 1)
     {
-        bSpeedhack = !bSpeedhack;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        bSpeedHack = !bSpeedHack;
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //super jump
     if (GetAsyncKeyState(VK_NUMPAD5) & 1)
     {
         bSuperJump = !bSuperJump;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //aimbot 
     if (GetAsyncKeyState(VK_NUMPAD6) & 1)
     {
         bAimbot = !bAimbot;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //rapid fire
     if (GetAsyncKeyState(VK_NUMPAD7) & 1)
     {
         bRapidFire = !bRapidFire;
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
 
 
@@ -139,6 +143,7 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     //continuous write/freeze
     if (localPlayerPtr)
     {
+        
         if (bHealth)
             localPlayer->health = 1337;
 
@@ -156,12 +161,11 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
             mem::Patch((BYTE*)(moduleBase + 0x63786), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10); //write back original instructions
 
 
-        if (bSpeedhack)
+        if (bSpeedHack)
         {
             if (GetAsyncKeyState(VK_CONTROL))
                 localPlayer->N00000041 = 3;
         }
-
         if (bSuperJump)
         {
             if (GetAsyncKeyState(VK_SPACE) & 1)
@@ -217,9 +221,11 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
             if (localPlayer->currentWeapon->gunwait->N000002D6 != 0)
                 localPlayer->currentWeapon->gunwait->N000002D6 = 0;
         }
+            
+        
     }
+    Draw();
     
-    //Draw();
 
     return wglSwapBuffersGateway(hDc);//pointer to original function
 }
@@ -233,12 +239,11 @@ DWORD WINAPI HackThread(HMODULE hModule)
     
     std::cout << "Og for a fee, stay sippin' fam\n";
     Sleep(500);
-    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedhack, bSuperJump, bAimbot, bRapidFire);
+    mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
 
     Hook SwapBuffersHook("wglSwapBuffers", "opengl32.dll", (BYTE*)hkwglSwapBuffers, (BYTE*)&wglSwapBuffersGateway, 5);
     SwapBuffersHook.Enable();
 
-    
     //keep console open
     while(true)
     {

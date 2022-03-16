@@ -37,6 +37,9 @@
     <Filter Include="ESP">
       <UniqueIdentifier>{3edb5a76-7695-438b-b527-0d9d5a1db2de}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{7c8e25bb-b017-4646-b341-ae1e8ae97fdf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -75,6 +78,9 @@
     <ClInclude Include="geom.h">
       <Filter>geom</Filter>
     </ClInclude>
+    <ClInclude Include="GUI.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -100,6 +106,9 @@
     </ClCompile>
     <ClCompile Include="geom.cpp">
       <Filter>geom</Filter>
+    </ClCompile>
+    <ClCompile Include="GUI.cpp">
+      <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

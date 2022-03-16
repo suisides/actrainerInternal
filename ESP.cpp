@@ -27,7 +27,6 @@ bool ESP::IsValidEnt(ent* ent)
 		return false;
 	}
 }
-
 bool ESP::IsAlive(ent* ent)
 {
 	if(ent)

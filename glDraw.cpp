@@ -31,11 +31,11 @@ void GL::DrawFilledRect(float x, float y, float width, float height, const GLuby
 						//GL_QUADS -> filled rectangles mode
 						
 						
-	glVertex2f(x, y);//top left			//will connect bottom left to top left,start top left -> go clockwise to bottom left
+	glVertex2f(x, y);//top left,		will connect bottom left to top left,start top left -> go clockwise to bottom left
 	glVertex2f(x + width, y);//top right
 	glVertex2f(x + width, y + height);//bottom right
 	glVertex2f(x, y + height);//bottom left
-	glEnd;
+	glEnd();
 }
 
 void GL::DrawOutline(float x, float y, float width, float height, float lineWidth, const GLubyte color[3])
