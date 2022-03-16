@@ -27,8 +27,6 @@ uintptr_t localPlayerTeamAddr = mem::FindDMAAddy((uintptr_t)localPlayerPtr, { 0x
 uintptr_t playersNumAddr = mem::FindDMAAddy(moduleBase + 0x1170, { 0x42C });
 uintptr_t directionAddr = mem::FindDMAAddy(moduleBase + 0x109b74, { 0x80 });
 uintptr_t grenadeAmmoAddr = mem::FindDMAAddy(moduleBase + 0x109B74, { 0x158 });
-float drawX = 300, drawY = 300, drawLX = 0, drawLY = 0;
-bool bShowGUI = false;
 
 
 //toggles
@@ -38,7 +36,8 @@ bool    bHealth = false,
         bSpeedHack = false,
         bSuperJump = false,
         bAimbot = false,
-        bRapidFire = false;
+        bRapidFire = false,
+        bShowGUI = false;
 
 typedef BOOL(__stdcall* twglSwapBuffers) (HDC hDc);
 
@@ -87,12 +86,14 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD1) & 1)
     {
         bHealth = !bHealth;
+        gui.bKeysStates[0] = !gui.bKeysStates[0];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //inc ammo and grenades
     if (GetAsyncKeyState(VK_NUMPAD2) & 1)
     {
         bAmmo = !bAmmo;
+        gui.bKeysStates[1] = !gui.bKeysStates[1];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
         if (bAmmo)
         {
@@ -110,6 +111,7 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD3) & 1)
     {
         bRecoil = !bRecoil;
+        gui.bKeysStates[2] = !gui.bKeysStates[2];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
 
     }
@@ -117,24 +119,28 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     if (GetAsyncKeyState(VK_NUMPAD4) & 1)
     {
         bSpeedHack = !bSpeedHack;
+        gui.bKeysStates[3] = !gui.bKeysStates[3];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //super jump
     if (GetAsyncKeyState(VK_NUMPAD5) & 1)
     {
         bSuperJump = !bSuperJump;
+        gui.bKeysStates[4] = !gui.bKeysStates[4];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //aimbot 
     if (GetAsyncKeyState(VK_NUMPAD6) & 1)
     {
         bAimbot = !bAimbot;
+        gui.bKeysStates[5] = !gui.bKeysStates[5];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
     //rapid fire
     if (GetAsyncKeyState(VK_NUMPAD7) & 1)
     {
         bRapidFire = !bRapidFire;
+        gui.bKeysStates[6] = !gui.bKeysStates[6];
         mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
     }
 

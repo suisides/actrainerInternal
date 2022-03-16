@@ -3,8 +3,8 @@
 #include "geom.h"
 #include "GUI.h"
 
-const int GUI_X = 50;
-const int GUI_Y = 50;
+const int GUI_X = 30;
+const int GUI_Y = 25;
 const int GUI_WIDTH = 250;
 const int GUI_HEIGHT = 350;
 const int GUI_OUTLINE_WIDTH = 4;
@@ -16,11 +16,16 @@ const int GUI_FONT_PADDING_Y = 10;
 
 const GLubyte* fontColor = rgb::black;
 
-
-const char *keys[7]{"God Mode:", "Infinite Ammo:", "No Recoil:", "Speedhack:", "Super Jump:", "Aimbot:", "Rapid Fire:"};
-bool keysStates[7]{ 0,0,0,0,0,0,0 };
-
-
+int GUI::GetLongestString(const char* strarray[])
+{
+	int length = 0;
+	for (int i = 0; i < sizeof(strarray); i++)
+	{
+		if (strlen(strarray[i]) > length)
+			length = strlen(strarray[i]);
+	}
+	return length;
+}
 
 void GUI::DrawGUI(GL::Font& font)
 {
@@ -32,21 +37,12 @@ void GUI::DrawGUI(GL::Font& font)
 	for (int i = 0; i < 7; i++)
 	{
 		float textX = GUI_X + (GUI_FONT_PADDING_X);
-		float textY = GUI_Y + (i*GUI_FONT_PADDING_Y) + (i* GUI_FONT_HEIGHT);
+		float textY = GUI_Y + ((i+1)*GUI_FONT_PADDING_Y) + ((i+1)* GUI_FONT_HEIGHT);
 
 		font.Print(textX, textY, fontColor, "%s", keys[i]);
-		if (keysStates[i])
-			font.Print(textX + (GUI_FONT_WIDTH * sizeof(keys[i])), textY, rgb::green, "Enabled");//sizeof(keys[i]) doesn't seem to work :/
+		if (bKeysStates[i])
+			font.Print(textX + (GUI_FONT_WIDTH * GetLongestString(keys)), textY, rgb::darkgreen, "Enabled");
 		else
-			font.Print(textX + (GUI_FONT_WIDTH * sizeof(keys[i])), textY, rgb::red, "Disabled");
+			font.Print(textX + (GUI_FONT_WIDTH * GetLongestString(keys)), textY, rgb::darkred, "Disabled");
 	}
-
-
-}
-
-void GUI::UpdateKeys()
-{
-
-
-
 }

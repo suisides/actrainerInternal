@@ -8,7 +8,9 @@
 namespace rgb
 {
 	const GLubyte red[3] = { 255,0,0 };
+	const GLubyte darkred[3] = { 128,0,0 };
 	const GLubyte green[3] = { 0,255,0 };
+	const GLubyte darkgreen[3] = { 0,128, 0 };
 	const GLubyte blue[3] = { 0,0,255 };
 	const GLubyte yellow[3] = { 255,255,0 };
 	const GLubyte cyan[3] = { 0,255,255 };
