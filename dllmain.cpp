@@ -48,8 +48,8 @@ GL::Font glFont;
 const int FONT_HEIGHT = 15;
 const int FONT_WIDTH = 9;
 
-ESP esp;
 GUI gui;
+ESP esp;
 vec3 self, currEnemy;
 
 void Draw()
@@ -62,40 +62,33 @@ void Draw()
     }
 
     GL::SetupOrtho();//DRAW HERE
+
+    if(gui.bKeysStates[0])
+        gui.DrawGUI(glFont);
     
-    esp.Draw(glFont);
-    if(bShowGUI)
-    gui.DrawGUI(glFont);
+    if(gui.bKeysStates[8])
+        esp.Draw(glFont);
 
     GL::RestoreGL();
 }
-
-
-
-
-
 
 BOOL __stdcall hkwglSwapBuffers(HDC hDc)
 {
     //toggle GUI
     if(GetAsyncKeyState(VK_DELETE) & 1)
     {
-        bShowGUI = !bShowGUI;
+        gui.bKeysStates[0] = !gui.bKeysStates[0];
     }
     //godmode
     if (GetAsyncKeyState(VK_NUMPAD1) & 1)
     {
-        bHealth = !bHealth;
-        gui.bKeysStates[0] = !gui.bKeysStates[0];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
+        gui.bKeysStates[1] = !gui.bKeysStates[1];
     }
     //inc ammo and grenades
     if (GetAsyncKeyState(VK_NUMPAD2) & 1)
     {
-        bAmmo = !bAmmo;
-        gui.bKeysStates[1] = !gui.bKeysStates[1];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
-        if (bAmmo)
+        gui.bKeysStates[2] = !gui.bKeysStates[2];
+        if (gui.bKeysStates[2])
         {
             mem::Patch((BYTE*)(moduleBase + 0x637e9), (BYTE*)"\xFF\x06", 2);
             mem::Patch((BYTE*)(moduleBase + 0x63378), (BYTE*)"\xFF\x00", 2);
@@ -110,74 +103,69 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
     //remove recoil
     if (GetAsyncKeyState(VK_NUMPAD3) & 1)
     {
-        bRecoil = !bRecoil;
-        gui.bKeysStates[2] = !gui.bKeysStates[2];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
-
+        gui.bKeysStates[3] = !gui.bKeysStates[3];
     }
     //speedhack
     if (GetAsyncKeyState(VK_NUMPAD4) & 1)
     {
-        bSpeedHack = !bSpeedHack;
-        gui.bKeysStates[3] = !gui.bKeysStates[3];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
+        gui.bKeysStates[4] = !gui.bKeysStates[4];
     }
     //super jump
     if (GetAsyncKeyState(VK_NUMPAD5) & 1)
     {
-        bSuperJump = !bSuperJump;
-        gui.bKeysStates[4] = !gui.bKeysStates[4];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
+        gui.bKeysStates[5] = !gui.bKeysStates[5];
     }
     //aimbot 
     if (GetAsyncKeyState(VK_NUMPAD6) & 1)
     {
-        bAimbot = !bAimbot;
-        gui.bKeysStates[5] = !gui.bKeysStates[5];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
+         gui.bKeysStates[6] = !gui.bKeysStates[6];
     }
     //rapid fire
     if (GetAsyncKeyState(VK_NUMPAD7) & 1)
     {
-        bRapidFire = !bRapidFire;
-        gui.bKeysStates[6] = !gui.bKeysStates[6];
-        mem::updateKeys(bHealth, bAmmo, bRecoil, bSpeedHack, bSuperJump, bAimbot, bRapidFire);
+       gui.bKeysStates[7] = !gui.bKeysStates[7];
     }
-
+    if (GetAsyncKeyState(VK_NUMPAD8) & 1)
+    {
+        gui.bKeysStates[8] = !gui.bKeysStates[8];
+    }
 
 
     //continuous write/freeze
     if (localPlayerPtr)
     {
-        
-        if (bHealth)
+            
+        //godmode
+        if (gui.bKeysStates[1])
             localPlayer->health = 1337;
-
-        if (bAmmo)
+        //inf ammo
+        if (gui.bKeysStates[2])
         {
             if (*(int*)(grenadeAmmoAddr) == 0)
                 *(int*)(grenadeAmmoAddr) += 1;
             if (localPlayer->currentWeapon->magAmmo->ammo == 0)
                 localPlayer->currentWeapon->magAmmo->ammo++;
         }
-
-        if (bRecoil)
+        //recoil
+        if (gui.bKeysStates[3])
             mem::Nop((BYTE*)(moduleBase + 0x63786), 10);
         else
             mem::Patch((BYTE*)(moduleBase + 0x63786), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10); //write back original instructions
 
-
-        if (bSpeedHack)
+        //speedhack
+        if (gui.bKeysStates[4])
         {
             if (GetAsyncKeyState(VK_CONTROL))
                 localPlayer->N00000041 = 3;
         }
-        if (bSuperJump)
+        //superjump
+        if (gui.bKeysStates[5])
         {
             if (GetAsyncKeyState(VK_SPACE) & 1)
                 *(float*)superJumpAddr = 4.0f;
         }
-        if (bAimbot)
+        //aimbot
+        if (gui.bKeysStates[6])
         {
             if (GetAsyncKeyState(VK_XBUTTON1))
             {
@@ -222,15 +210,17 @@ BOOL __stdcall hkwglSwapBuffers(HDC hDc)
                 }
             }
         }
-        if (bRapidFire)
+        //rapidfire
+        if (gui.bKeysStates[7])
         {
             if (localPlayer->currentWeapon->gunwait->N000002D6 != 0)
                 localPlayer->currentWeapon->gunwait->N000002D6 = 0;
         }
-            
-        
+        //esp and GUI
+        Draw(); //Draw() has its own if statements
+         
     }
-    Draw();
+   
     
 
     return wglSwapBuffersGateway(hDc);//pointer to original function
